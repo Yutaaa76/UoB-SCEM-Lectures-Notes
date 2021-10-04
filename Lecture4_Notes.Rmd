@@ -13,7 +13,7 @@ library(palmerpenguins)
 ```
 
 Rows: examples, observations, cases
-Coloumns: features, variables, covariates
+Columns: features, variables, covariates
 ```{r}
 head(penguins)
 ```
@@ -62,7 +62,7 @@ select(filter(penguins, species=="Gentoo"), species, bill_length_mm, body_mass_g
 ```
 
 
-## The pip operator
+## The pip operator "%>%"
 chaining multiple operations with the pip operator %>%
 ```{r}
 penguins %>%

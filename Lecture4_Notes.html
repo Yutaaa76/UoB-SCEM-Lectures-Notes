@@ -183,7 +183,7 @@ pre code {
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(palmerpenguins)</code></pre>
-<p>Rows: examples, observations, cases Coloumns: features, variables, covariates</p>
+<p>Rows: examples, observations, cases Columns: features, variables, covariates</p>
 <pre class="r"><code>head(penguins)</code></pre>
 <pre><code>## # A tibble: 6 x 8
 ##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g sex  
@@ -294,7 +294,7 @@ pre code {
 ## # ... with 114 more rows</code></pre>
 </div>
 <div id="the-pip-operator" class="section level2">
-<h2>The pip operator</h2>
+<h2>The pip operator “%&gt;%”</h2>
 <p>chaining multiple operations with the pip operator %&gt;%</p>
 <pre class="r"><code>penguins %&gt;%
   filter(species==&quot;Gentoo&quot;) %&gt;%
