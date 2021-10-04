@@ -1,0 +1,91 @@
+---
+title: "SCEM_Assignment_1"
+author: "Wenjie Qi"
+date: "2021/9/29"
+output: html_document
+---
+
+
+
+## 1 Create your first data frame
+```{r}
+animals <- c("Rabbit", "Human", "Bird", "Bull")  # vector of animal name
+animals
+
+num_legs <- c(4, 2, 2, 4)  # vector of the number of their legs
+num_legs
+
+c <- data.frame(animals, num_legs)  # then we get the data frame 
+c
+```
+
+
+
+## 2 Matrix Operation
+```{r}
+x_vect <- seq(12, 2, -2)  # the x vector
+x_vect
+
+X <- matrix(x_vect, 2, 3)  # reshape it to get our X
+X
+
+Y <- matrix(seq(1, 4), 2, 2)  # the Y 
+Y
+
+Z <- matrix(seq(4, 10, 2), 2, 2)  # the Z
+Z
+
+Y_t <- t(Y)  # Y_t
+Y_t
+
+Z_t <- t(Z)  # Z_t
+Z_t
+
+Y+Z
+Z+Y  # the results are same, obviously
+
+Y * Z
+Z * Y  # the results of matrix product are same, 
+
+Y %*% Z
+Z %*% Y  # the results of element-wise product are not same
+
+Y %*% X
+
+# X * Y  # of course don't work
+
+solve(Y)  # get the inverse matrix of Y
+
+Y %*% solve(Y)
+solve(Y) %*% Y  # the matrix product of a matrix and its inverse matrix is always an identity matrix
+
+solve(Y) %*% X
+
+solve(Y, X)  # what a useful function!
+```
+
+
+
+## 3 Writing a simple function within R
+```{r}
+myFirstRFunc <- function(n){
+  stopifnot(n > 0, n %% 1 == 0)
+  
+  sum <- 0
+  for(i in 1:n-1){
+    if(i%%2==0 | i%%7==0){
+      sum <- sum + i
+    }
+  }
+  return(sum)
+}
+myFirstRFunc(1000)
+```
+
+
+
+## 4 Version control with RStudio and git
+All done.
+
+## 5 Generating an R markdown notebook
+
