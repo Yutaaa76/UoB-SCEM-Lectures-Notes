@@ -5,7 +5,7 @@ date: "2021/10/3"
 output: html_document
 ---
 
-# Tabular data
+## Tabular data
 
 ```{r}
 library(tidyverse)

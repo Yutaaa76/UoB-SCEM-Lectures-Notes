@@ -1,0 +1,8 @@
+---
+title: 'Lecture5 Notes: Exploratory data analysis'
+author: "Wenjie Qi"
+date: "2021/10/5"
+output: html_document
+---
+
+
