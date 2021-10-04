@@ -408,6 +408,95 @@ my_penguins</code></pre>
 ## 2 Chinstrap       68          3.73                   4.02
 ## 3 Gentoo         124          5.08                   4.58</code></pre>
 </div>
+<div id="across" class="section level2">
+<h2>across()</h2>
+<p>apply a function within summarize to all columns at once</p>
+<pre class="r"><code>penguins %&gt;% 
+  summarize(across(everything(), ~sum(is.na(.x))))</code></pre>
+<pre><code>## # A tibble: 1 x 8
+##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g   sex
+##     &lt;int&gt;  &lt;int&gt;          &lt;int&gt;         &lt;int&gt;            &lt;int&gt;       &lt;int&gt; &lt;int&gt;
+## 1       0      0              2             2                2           2    11
+## # ... with 1 more variable: year &lt;int&gt;</code></pre>
+</div>
+<div id="across-with-where" class="section level2">
+<h2>across() with where()</h2>
+<pre class="r"><code>penguins %&gt;%
+  summarize(across(where(is.numeric), ~mean(.x, na.rm=T)))</code></pre>
+<pre><code>## # A tibble: 1 x 5
+##   bill_length_mm bill_depth_mm flipper_length_mm body_mass_g  year
+##            &lt;dbl&gt;         &lt;dbl&gt;             &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;
+## 1           43.9          17.2              201.       4202. 2008.</code></pre>
+</div>
+<div id="combining-summarize-group_by-and-across" class="section level2">
+<h2>Combining summarize(), group_by() and across()</h2>
+<pre class="r"><code>penguins %&gt;%
+  select(-year) %&gt;%
+  group_by(species) %&gt;%
+  summarize(across(where(is.numeric), ~mean(.x, na.rm=T)), num_rows=n())</code></pre>
+<pre><code>## # A tibble: 3 x 6
+##   species   bill_length_mm bill_depth_mm flipper_length_mm body_mass_g num_rows
+##   &lt;fct&gt;              &lt;dbl&gt;         &lt;dbl&gt;             &lt;dbl&gt;       &lt;dbl&gt;    &lt;int&gt;
+## 1 Adelie              38.8          18.3              190.       3701.      152
+## 2 Chinstrap           48.8          18.4              196.       3733.       68
+## 3 Gentoo              47.5          15.0              217.       5076.      124</code></pre>
+</div>
+<div id="join" class="section level2">
+<h2>join()</h2>
+<p>fuse multiple data frames</p>
+<pre class="r"><code>penguin_bill_lengths_df &lt;- penguins %&gt;%
+  arrange(desc(bill_length_mm)) %&gt;%
+  select(species, bill_length_mm)
+penguin_bill_lengths_df</code></pre>
+<pre><code>## # A tibble: 344 x 2
+##    species   bill_length_mm
+##    &lt;fct&gt;              &lt;dbl&gt;
+##  1 Gentoo              59.6
+##  2 Chinstrap           58  
+##  3 Gentoo              55.9
+##  4 Chinstrap           55.8
+##  5 Gentoo              55.1
+##  6 Gentoo              54.3
+##  7 Chinstrap           54.2
+##  8 Chinstrap           53.5
+##  9 Gentoo              53.4
+## 10 Chinstrap           52.8
+## # ... with 334 more rows</code></pre>
+<pre class="r"><code>species &lt;- unique(penguins$species)
+latin_name &lt;- c(&quot;Pygoscelis adeliae&quot;, &quot;Pygoscelis papua&quot;, &quot;Pygoscelis antarcticus&quot;)
+latin_name_df &lt;- data.frame(species, latin_name)
+latin_name_df</code></pre>
+<pre><code>##     species             latin_name
+## 1    Adelie     Pygoscelis adeliae
+## 2    Gentoo       Pygoscelis papua
+## 3 Chinstrap Pygoscelis antarcticus</code></pre>
+<pre class="r"><code>penguin_bill_lengths_df %&gt;%
+  inner_join(latin_name_df)</code></pre>
+<pre><code>## Joining, by = &quot;species&quot;</code></pre>
+<pre><code>## # A tibble: 344 x 3
+##    species   bill_length_mm latin_name            
+##    &lt;fct&gt;              &lt;dbl&gt; &lt;chr&gt;                 
+##  1 Gentoo              59.6 Pygoscelis papua      
+##  2 Chinstrap           58   Pygoscelis antarcticus
+##  3 Gentoo              55.9 Pygoscelis papua      
+##  4 Chinstrap           55.8 Pygoscelis antarcticus
+##  5 Gentoo              55.1 Pygoscelis papua      
+##  6 Gentoo              54.3 Pygoscelis papua      
+##  7 Chinstrap           54.2 Pygoscelis antarcticus
+##  8 Chinstrap           53.5 Pygoscelis antarcticus
+##  9 Gentoo              53.4 Pygoscelis papua      
+## 10 Chinstrap           52.8 Pygoscelis antarcticus
+## # ... with 334 more rows</code></pre>
+<div id="types-of-join-function" class="section level3">
+<h3>Types of join function</h3>
+<ol style="list-style-type: decimal">
+<li>inner join: only fuse the rows appears in both data frames</li>
+<li>full join: opposite of inner join</li>
+<li>left join: contain all rows of the left data frame</li>
+<li>right join: opposite of left join</li>
+</ol>
+</div>
+</div>
 </div>
 
 
