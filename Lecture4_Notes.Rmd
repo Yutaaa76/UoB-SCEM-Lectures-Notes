@@ -1,0 +1,131 @@
+---
+title: "Lecture4 Notes: Data Wrangling"
+author: "Wenjie Qi"
+date: "2021/10/3"
+output: html_document
+---
+
+# Tabular data
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+Rows: examples, observations, cases
+Coloumns: features, variables, covariates
+```{r}
+head(penguins)
+```
+
+# Data Wrangling
+Data wrangling is the process of transforming data from one form to another
+Extracting, transforming, fusing and aggregating information from exist data
+We can do this all in R with the Tidyverse, especialling the dplyr
+
+### "nouns"
+  Data frames, the representations in R of tabular data
+  
+### "verbs"
+  Operations which can be applied to data frames
+  select()   - take a subset of columns 
+  filter()   - take s subset of rows
+  mutate()   - add or modify existing columns
+  arrange()  - sort rows
+  summarize()- aggregate data across existing rows
+
+## select()
+extract a subset of columns
+```{r}
+select(penguins, species, bill_length_mm, body_mass_g)
+```
+
+remove several columns: put a minus before arguments
+```{r}
+select(penguins, -species, -bill_length_mm, -body_mass_g)
+```
+
+## filter()
+extract a subset of rows
+```{r}
+filter(penguins, species=="Gentoo")
+```
+
+we can combine two or more conditions
+```{r}
+filter(penguins, species=="Gentoo" & body_mass_g>5000)
+```
+  
+we can combing select() and filter()
+```{r}
+select(filter(penguins, species=="Gentoo"), species, bill_length_mm, body_mass_g)
+```
+
+
+## The pip operator
+chaining multiple operations with the pip operator %>%
+```{r}
+penguins %>%
+  filter(species=="Gentoo") %>%
+  select(species, bill_length_mm, body_mass_g)
+```
+
+%>% allow arguments to be implicitly passed as object to the function after the pip
+```{r}
+f <- function(a,b){
+  return(a^2 + b)
+}
+f(3,1)
+```
+
+```{r}
+3 %>% f(1)  # "3" is supplied as the first argument in the function
+```
+
+## mutate()
+create a new column as a funtion of existing columns
+```{r}
+my_penguins <- penguins %>%
+  mutate(flipper_bill_ratio = flipper_length_mm/bill_length_mm) %>%
+  select(species, bill_length_mm, flipper_length_mm, flipper_bill_ratio)
+my_penguins
+```
+
+```{r}
+ggplot(data=rename(my_penguins, Species=species), aes(x=flipper_bill_ratio, y=Species, fill=Species)) + geom_violin() + theme_bw() + xlab("Flipper bill ratio")
+```
+
+
+## rename()
+```{r}
+my_penguins %>% rename(f_over_b = flipper_bill_ratio)
+```
+
+
+## arrange()
+sort the rows of a table via arrange()
+```{r}
+my_penguins %>% arrange(desc(bill_length_mm))
+```
+
+  
+## summarize()
+summarize() computes vector functions across the entire data frame
+```{r}
+penguins %>%
+  summarize(
+    num_rows=n(), avg_weights_kg=mean(body_mass_g/1000, na.rm=T), avg_flipper_bill_ratio=mean(flipper_length_mm/bill_length_mm, na.rm=T)
+  )
+```
+
+combine summarize() and group_by()
+```{r}
+penguins %>%
+  group_by(species) %>%
+  summarize(
+    num_rows=n(), avg_weight_kg=mean(body_mass_g/1000,na.rm=T), avg_flipper_bill_ratio=mean(flipper_length_mm/bill_length_mm,na.rm=T)
+  )
+```
+
+
+

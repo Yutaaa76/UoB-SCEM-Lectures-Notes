@@ -1,0 +1,185 @@
+---
+title: "Lecture0 1_Notes"
+author: "Wenjie Qi"
+date: "2021/9/27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Lists
+```{r}
+first_list <- list(TRUE, 3, "Bristol")  # Lists can be of mixed types
+first_list
+
+second_list <- list( t_value=TRUE, num_value=3, city="Bristol")  # lists members can be named
+second_list$t_value
+second_list$city
+
+```
+
+
+## Matrics
+```{r}
+M <- matrix(seq(10), 2, 5)  # you can generate a 2 by 5 matrix
+M
+M[2, 3]  # the third element of the second row can be accessed directly
+M[, 4]  # or we can inspect the entire four column
+M[1,]
+is.vector(M[2,])  # we can check that a selected row or column is a vector or not
+```
+
+
+## Data Frames
+```{r}
+city_name <- c("Bristol", "London", "Birmingham", "Manchester")
+population <- c(0.5, 9, 1, 0.5)
+
+first_data_frame <- data.frame(city_name, population)  # we can generate a data frame like this
+first_data_frame
+first_data_frame$city_name[2]
+```
+
+
+## Arithmetic Operations
+```{r}
+(((4 + 2 - 1) * 4) / 2) ^ 2
+a <- matrix(sample(1:10, 6, replace = T), 2, 3)  # a random 2 by 3 matrix
+b <- matrix(sample(1:10, 6, replace = T), 2, 3)  
+
+a * b  # this performs elements wise multiplication
+a%*%t(b)  # t(b) computes the transpose of b and %*% performs matrix multiplication
+```
+
+
+## Boolean Operations
+```{r}
+a <- c(T, T, F, F)  # a vector of Booleans
+b <- c(T, F, T, F)
+
+!a  # not a
+a&b  # a and b
+a|b  # the inclusive or between a and b
+xor(a, b)  # the exclusive or between a and b
+```
+
+
+## Functions
+```{r}
+is_prime <- function(num){
+  
+# Function which takes as input a positive integer and outputs Boolean - True if and only if the input is prime
+  
+  stopifnot(is.numeric(num), num%%1 == 0, num >= 0)  # Stop if the input is not a positive integer
+  
+  t_val <- TRUE
+  
+  if(num < 2){
+    
+    t_val <- FALSE  # Output FALSE if input is either 0 or 1
+    
+  }else if(num > 2){
+    
+    for(i in 2:sqrt(num)){
+      
+      if(num %% i == 0){
+        
+        t_val <- FALSE
+        
+        break  # If i divides num then num is not prime
+        
+      }
+    }
+  }
+  
+  return(t_val)
+}
+
+is_prime(39)
+is_prime(7)
+```
+
+
+## Call by value semantics
+```{r}
+a <- seq(5, 2)
+demo_func_1 <- function(x){
+  x[2] <- -10
+  print(x)
+}
+demo_func_1(a)
+a
+```
+
+
+## Lazy evaluation
+```{r}
+subtraction_function <- function(num_to_sub){
+  output_function <- function(x){
+    return(x - num_to_sub)
+  }
+  return(output_function)
+}
+
+a <- 1  # initialize a
+f1 <- subtraction_function(a)  # construct a function which subtracts a
+print(f1(2))  # evaluate function at 2
+
+a <- 2  # modify a
+print(f1(2))  # dose not change the function
+# Because we defined f1 in terms of a,and according to the called by value semantics, f1 have a copy of a instead of a itself
+
+b <- 1
+f2 <- subtraction_function(b)
+b <- 2 
+print(f2(2))
+```
+
+
+## R Markdown
+
+### Code fragment
+We can embed pieces of R code as follows:
+```{r building a function and a data frame}
+
+# First we create a simple function
+f <- function(z) {
+  return(5*z^2 + z + cos(15*z) + 0.3*sin(300*z))
+}
+
+# We randomly generate some x
+x <- runif(100)
+# We set y to be f applied to x
+y <- f(x)
+
+#We then put x and y togerther in a data frame
+df <- data.frame(x, y)
+
+```
+
+
+### Embedded plot
+We can also embed plots. By using 'echo = FALSE', we display only the output
+```{r, echo=FALSE}
+# A simple plot
+plot(x, y)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

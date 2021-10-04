@@ -1,0 +1,160 @@
+---
+title: "Lecture3 Notes: Visualisition with R"
+author: "Wenjie Qi"
+date: "2021/10/2"
+output: html_document
+---
+
+
+
+# The importance of visualisition
+1.    Exploring data
+2.    Communicating your insights
+
+
+
+# Visual cues
+1.    Position
+2.    Length
+3.    Angle
+4.    Direction
+5.    Shape
+6.    Area
+7.    Volume
+8.    Shade
+9.    Color
+
+
+
+# Visualisition in R with ggplot2
+
+##use install.packages("tidyverse") to install ggplot2, dplyr, tidyr, purrr
+
+```{r}
+library(ggplot2)
+library(palmerpenguins)
+library(dplyr)  # to use rename
+```
+
+
+## Types of variables
+
+Continuous:  Numeric variables that can take any value on an interval
+  e.g. Bill lenth, bill depth, flipper length, body mass
+  
+Discrete:  Numeric variables for which there is a minimum gap between possible values
+  e.g. year the observation was recorded
+
+Categorical:  Variables that can take on only a specific set of values representing distinct categories
+  e.g. species, island, etc.
+```{r}
+head(penguins)  # show the head rows of penguins data set
+```
+
+
+## Univariate plots
+
+### Histogram plot
+```{r}
+univar_plot <- ggplot(data=penguins, aes(x=flipper_length_mm))+xlab("Flipper length (mm)")
+univar_plot + geom_histogram(binwidth=5) + ylab("Count")
+```
+
+
+### Kernel density plot
+```{r}
+univar_plot + geom_density(adjust=0.5) + ylab("Density")
+```
+
+
+###  Skewness
+Negative skewed data: a large left tail consisting of a relatively small number of relatively low values, but most of the data is towards the upper end of the plot
+Positive skewed data: a large right tail
+Can be seen from a density plot
+
+
+### Unimodal vs. multi-modal
+The number of modes refers to the number of peaks within the data.
+So the univar_plot above is a bimodal distribution.
+
+
+## Bivariate plots
+
+### Density plot
+```{r}
+ggplot(data=rename(penguins, Species=species), aes(x=flipper_length_mm, color=Species)) + geom_density() + theme_bw() + xlab("Flipper length (mm)") + ylab("Density")
+```
+
+
+### Box plot
+```{r}
+ggplot(data=penguins, aes(x=flipper_length_mm, y=species)) + geom_boxplot() + xlab("Flipper length (mm)") + ylab("Penguin species")
+```
+
+
+### Violin plot
+```{r}
+ggplot(data=rename(penguins, Species=species), aes(x=flipper_length_mm, y=Species, fill=Species)) + geom_violin() + theme_bw() + xlab("Flipper length (mm)")
+```
+
+
+### Scatter plot: to show the relationship between two continous variables
+```{r}
+mass_flipper_scatter <- ggplot(data=penguins, aes(y=body_mass_g, x=flipper_length_mm)) + xlab("Flipper length (mm)") + ylab("Body mass (g)")
+mass_flipper_scatter + geom_point(size=2)
+```
+
+
+
+## Multivariate plots
+
+### Scatter plot
+```{r}
+mass_flipper_scatter + geom_point(aes(color=bill_length_mm), size=2) + scale_color_gradient(low="blue", high="red") + guides(color=guide_legend("Bill length (mm)"))
+```
+
+
+```{r}
+mass_flipper_scatter + geom_point(aes(color=bill_length_mm, size=bill_depth_mm)) + scale_color_gradient(low="blue", high="red") + guides(color=guide_legend("Bill length (mm)"), size=guide_legend("Bill depth (mm)"))
+```
+
+
+when use color, use an additional aesthetic to be clear
+```{r}
+mass_flipper_scatter + geom_point(aes(color=species, shape= species))
+```
+
+
+```{r}
+mass_flipper_scatter + geom_text(aes(label=species, color=species)) + guides(color=guide_legend("Species"))
+```
+
+### Facets
+```{r}
+mass_flipper_scatter + geom_point() + facet_wrap(~species)
+```
+
+
+
+## Trend lines: illustrate the relationship between two variables
+```{r}
+trend_plot <- ggplot(data=filter(penguins, species=="Gentoo"), aes(y=body_mass_g, x=flipper_length_mm)) + xlab("Flipper length (mm)") + ylab("Body mass (g)") + geom_point()
+trend_plot + geom_smooth()
+```
+
+```{r}
+trend_plot + geom_smooth(method="lm")
+```
+
+
+```{r}
+min(filter(penguins, species=="Gentoo")$body_mass_g,na.rm=T)
+```
+
+
+
+## Annotation
+```{r}
+trend_plot + geom_smooth(method="lm") + geom_curve(x=220, xend=209, y=4250, yend=3975, arrow=arrow(length=unit(0.5, "cm")), curvature=0.2) + geom_text(x=225, y=4250, label="The lightest Gentoo \n penguin wighs 39.5kg")
+```
+
