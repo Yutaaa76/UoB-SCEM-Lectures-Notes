@@ -6,3 +6,243 @@ output: html_document
 ---
 
 
+# Data types
+1. continuous
+2. discrete
+3. categorical
+4. binary
+5. ordinal
+
+data set = data sample
+
+
+# Estimating the overall location of a feature in a data set
+
+
+## Estimates of location for categorical data
+Which single value is most representative or typical?
+For categorical data the natural answer is the sample mode.
+The sample mode is the value which occurs with the highest frequency for a feature within a data set.
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(modeest)
+library(hydroTSM)
+library(ggplot2)
+library(tibble)
+mfv1(penguins$species)  # most frequent value
+```
+
+
+## Estimates of location for continuous data
+```{r}
+data("SanMartinoPPts")
+rainfall <- as.vector(window(SanMartinoPPts, start=as.Date("1985-01-01"), end=as.Date("1985-01-01")+99))
+
+ggplot(tibble(rainfall), aes(x=rainfall)) + xlab("Daily rainfall (mm)") + geom_density(adjust=10, size=1) + xlim(c(0, 50))
+```
+Which single number can best represent "typical rainfall"?
+
+
+## The sample mean
+```{r}
+mean(rainfall, na.rm=1)
+```
+
+
+## The sample median
+```{r}
+median(rainfall, na.rm=1)
+```
+
+
+### Positively skewed & Negatively skewed
+positive: mean < median
+negative: mean > median
+
+
+## Outliers
+An outlier is a value in a data set which differs substantially from other values.
+1.  A faithful representation of genuinely anomalous event.
+2.  An error in the data resulting from problems in measurement, recording etc.
+
+
+## Comparing the sample median and the sample mean
+1. A major advantage of the median over the mean is that it's robust to small corruptions in the data set.
+2. The sample median effectively ignores a large section of the data set, unlike mean.
+   And this makes it difficult to aggregated medians from multiple sources.
+
+
+## The trimmed sample mean
+the mean computed after removing a prescribed fraction of the data
+```{r}
+mean(rainfall, na.rm = 1, trim = 0.05)
+```
+
+
+
+## Examples
+
+###Estimates of location for penguins
+```{r}
+flippers <- penguins %>%
+  filter(species == "Adelie") %>%
+  select(flipper_length_mm) %>%
+  unlist() %>%  # turn a list into vector
+  as.vector()  # as.vector, a generic, attempts to coerce its argument into a vector of mode mode (the default is to coerce to whichever vector mode is most convenient): if the result is atomic all attributes are removed.
+
+ggplot(tibble(flippers), aes(x=flippers)) + xlab("Flipper length (mm)") + geom_density(adjust=1, size=1)
+```
+
+
+```{r}
+ggplot(tibble(flippers), aes(x=flippers)) + 
+  geom_density(adjust=1, size=1) + xlab("Flipper length (mm)") + ylab("Density") +
+  geom_vline(aes(xintercept = mean(flippers, na.rm=1), linetype="mean", color="mean"), size=1) + 
+  geom_vline(aes(xintercept = median(flippers, na.rm=1), linetype="median", color="median"), size=1) + 
+  geom_vline(aes(xintercept = mean(flippers,na.rm=1, trim=0.25), linetype="t_mean", color="t_mean"), size=1) + 
+  scale_linetype_manual(name="stats", values=c(mean="dashed", median="dotted", t_mean="dotdash")) + 
+  scale_color_manual(name="stats", values=c(mean="red", median="blue", t_mean="purple")) + 
+  ggtitle("Location estimators applied to flipper lengths")
+```
+
+
+### Estimates of location for rainfall data
+```{r}
+ggplot(tibble(rainfall), aes(x=rainfall)) + 
+  geom_density(adjust=5, size=1) + xlab("Daily rainfall (mm)") + ylab("Density") +
+  geom_vline(aes(xintercept = mean(rainfall, na.rm=1), linetype="mean", color="mean"), size=1) + 
+  geom_vline(aes(xintercept = median(rainfall, na.rm=1), linetype="median", color="median"), size=1) + 
+  geom_vline(aes(xintercept = mean(rainfall,na.rm=1, trim=0.1), linetype="t_mean", color="t_mean"), size=1) + 
+  scale_linetype_manual(name="stats", values=c(mean="dashed", median="dotted", t_mean="dotdash")) + 
+  scale_color_manual(name="stats", values=c(mean="red", median="blue", t_mean="purple")) + 
+  ggtitle("Location estimators applied to rainfall data")
+```
+
+
+## Sample quantiles and sample percentiles
+```{r}
+quantile(flippers, na.rm=1, probs=seq(from=0, to=1, by=0.1))
+```
+
+### In penguins
+```{r}
+probabilities <- c(0.25, 0.5, 0.75)
+quantiles <- quantile(flippers, probs=probabilities, na.rm=1)
+
+ggplot(tibble(flippers), aes(x=flippers)) + theme_bw() + 
+  geom_density(adjust=1, size=1) + xlab("Flipper length (mm)") + ylab("Density") +
+  geom_vline(xintercept = quantiles, linetype="dashed", color="red") + 
+  annotate("label", x=quantiles, y=0.0325, size=5, fill="white", label= probabilities) + 
+  annotate("label", x=quantiles, y=0.0275, size=5, fill="white", label=quantiles)
+```
+
+```{r}
+quantile(flippers, probs=c(0.25, 0.5, 0.75), na.rm=1)
+```
+
+
+### In rainfall data
+```{r}
+quantile(rainfall, na.rm=1, probs=seq(from=0, to=1, by=0.1))
+```
+
+```{r}
+probabilities <- c(0.25, 0.5, 0.75)
+quantiles <- quantile(rainfall, probs=probabilities, na.rm=1)
+
+ggplot(tibble(rainfall), aes(x=rainfall)) + theme_bw() + 
+  geom_density(adjust=5, size=1) + xlab("Rain fall (mm)") + ylab("Density") +
+  geom_vline(xintercept=quantiles, linetype="dashed", color="red")
+```
+
+```{r}
+quantile(rainfall, probs=c(0.25, 0.5, 0.75), na.rm=1)
+```
+
+
+# Estimates of variability
+Another crucial aspect of a feature in a data set is its variability or dispersion.
+
+## The sample variance and sample standard deviation
+
+```{r}
+var(flippers, na.rm=1)
+```
+
+```{r}
+sd(flippers, na.rm=1)
+```
+
+
+## The sample median absolute deviation
+The median absolute deviation is a robust alternative to the standard deviation.
+```{r}
+mad(flippers, na.rm=1)
+```
+
+
+## The sample range
+just the range, but extremely sensitive to outliers
+```{r}
+diff(range(flippers, na.rm=1))
+```
+
+
+## The interqurtile range
+75%th - 25%th
+```{r}
+quantile(flippers, probs=c(0.25, 0.5, 0.75), na.rm=1)
+```
+
+```{r}
+IQR(flippers, na.rm=1)
+```
+
+
+
+# Understanding box plots
+```{r}
+ggplot(data=penguins, aes(y=flipper_length_mm, x=species)) + geom_boxplot() + ylab("Flipper length (mm)") + xlab("Penguin species")
+```
+
+
+## Interquartile range and outliers
+```{r}
+q25 <- quantile(flippers, 0.25, na.rm=1)
+q75 <- quantile(flippers, 0.75, na.rm=1)
+iq_range <- q75 - q25
+outliers <- flippers[(flippers > q75 + 1.5*iq_range) | (flippers < q25 - 1.5*iq_range)]
+outliers
+```
+
+
+
+# Relating variables via sample covariance and sample correlation
+
+
+## Sample covariance
+used to see how connected two variables or features
+```{r}
+cov(penguins$flipper_length_mm, penguins$bill_length_mm, use="complete.obs")
+```
+
+
+## Sample correlation
+used to see how connected two variables or features
+```{r}
+cor(penguins$flipper_length_mm, penguins$bill_length_mm, use = "complete.obs")
+```
+
+
+
+# Sample vs. population quantities
+We view the data set as a sample from a much larger population of penguins
+
+The data set is often referred to as a data sample, or just sample.
+
+A statistic(aka sample statistics or summary statistic) is any function of the sample.
+
+Whilst we compute sample statistics based on the data, our true interests often lie on the associated population quantity.
+
+Making inferences about the underlying population based upon the sample lies at the heart of statistics.

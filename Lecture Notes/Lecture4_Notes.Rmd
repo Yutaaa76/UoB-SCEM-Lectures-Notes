@@ -131,6 +131,7 @@ penguins %>%
 ## across()
 apply a function within summarize to all columns at once
 ```{r}
+# summarize(penguins, across(everything(), ~sum(is.na(.x))))
 penguins %>% 
   summarize(across(everything(), ~sum(is.na(.x))))
 ```
