@@ -1,0 +1,47 @@
+---
+title: "SCEM_Assignment_2"
+author: "Wenjie Qi"
+date: "2021/10/6"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(Stat2Data)
+library(ggplot2)
+
+data("Hawks")
+hawksSmall <- drop_na(select(Hawks, Age, Day, Month, Year, CaptureTime, Species, Wing, Weight, Tail))
+```
+
+# 1 Visualisation
+
+## 1.1 Types of variables
+```{r}
+dim(hawksSmall)
+```
+
+```{r}
+head(hawksSmall)
+```
+
+1. Month:    discrete
+2. Species:  categorical
+3. Age:      discrete
+4. Wing:     continuous
+5. Weight:   continuous
+
+
+## 1.2 What's wrong with this plot?
+1. There's no labels of horizontal and vertical direction.
+2. The points are to large to see clearly.
+3. The guide legend which says 'Culmen' cannot make us know which attribute or variable of culmen it represents.
+4. There are too many variables in that scatter plot, it's hard to read.
+
+
+## 1.3 Generate a histogram
+```{r}
+weight_plot <- ggplot(data = hawksSmall, aes(x = Weight)) + xlab("Weight (gm)")
+weight_plot + geom_histogram(binwidth = 100) + ylab("Count")
+```
+

@@ -40,7 +40,7 @@ library(dplyr)  # to use rename
 ## Types of variables
 
 Continuous:  Numeric variables that can take any value on an interval
-  e.g. Bill lenth, bill depth, flipper length, body mass
+  e.g. Bill length, bill depth, flipper length, body mass
   
 Discrete:  Numeric variables for which there is a minimum gap between possible values
   e.g. year the observation was recorded

@@ -83,7 +83,7 @@ f(3,1)
 ```
 
 ## mutate()
-create a new column as a funtion of existing columns
+create a new column as a function of existing columns
 ```{r}
 my_penguins <- penguins %>%
   mutate(flipper_bill_ratio = flipper_length_mm/bill_length_mm) %>%
