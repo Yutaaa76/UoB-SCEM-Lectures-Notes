@@ -23,6 +23,8 @@ dim(hawksSmall)
 
 ```{r}
 head(hawksSmall)
+s <- select(hawksSmall, Species, Weight)
+s
 ```
 
 1. Month:    discrete
@@ -36,7 +38,7 @@ head(hawksSmall)
 1. There's no labels of horizontal and vertical direction.
 2. The points are to large to see clearly.
 3. The guide legend which says 'Culmen' cannot make us know which attribute or variable of culmen it represents.
-4. There are too many variables in that scatter plot, it's hard to read.
+4. There are too many variables in this scatter plot, makes it's hard to read.
 
 
 ## 1.3 Generate a histogram
@@ -44,4 +46,232 @@ head(hawksSmall)
 weight_plot <- ggplot(data = hawksSmall, aes(x = Weight)) + xlab("Weight (gm)")
 weight_plot + geom_histogram(binwidth = 100) + ylab("Count")
 ```
+
+
+## 1.4 Generate a density plot
+```{r}
+tail_length_plot <- ggplot(data=hawksSmall, aes(x=Tail)) + xlab("Tail length (mm)")
+tail_length_plot + geom_density(adjust=1) + ylab("Density")
+```
+
+```{r}
+tail_length_plot <- ggplot(data=hawksSmall, aes(x=Tail)) + xlab("Tail length (mm)")
+tail_length_plot + geom_density(adjust=0.5) + ylab("Density")
+```
+
+adjust: A multiplicate bandwidth adjustment. This makes it possible to adjust the bandwidth while still using the a bandwidth estimator. For example, adjust = 1/2 means use half of the default bandwidth.
+
+Biomodal
+
+
+```{r}
+  ggplot(data=hawksSmall, 
+         aes(x=Tail, color=Species)) + 
+  geom_density() + 
+  theme_bw() + 
+  xlab("Tail (mm)") + 
+  ylab("Density")
+```
+
+
+```{r}
+  ggplot(data=hawksSmall, 
+       aes(x=Tail, y=Species, fill=Species)) + 
+  geom_violin() + 
+  theme_bw() + 
+  xlab("Tail (mm)") + 
+  ylab("Species")
+```
+
+
+## 1.5 Scatter plots
+```{r}
+tail_weight_scatter <- ggplot(data=hawksSmall, aes(x=Tail, y=Weight)) + xlab("Tail (mm)") + ylab("Weight (gm)")
+
+tail_weight_scatter + geom_point(aes(color=Species, shape=Species), size=1)
+```
+
+
+## 1.6 Treand lines and facet wraps
+```{r}
+trend_plot <- ggplot(data=hawksSmall, aes(x=Tail, y=Weight, lable=Species, color=Species)) + xlab("Tail (mm)") + ylab("Weight (gm)") + geom_point()
+trend_plot + facet_wrap(~Species, scales="free") + geom_smooth(method="lm")
+```
+
+
+
+# 2 Data wranglong
+
+## 2.1 Select and filter functions
+```{r}
+hSF <- hawksSmall %>%
+        filter(Species=="RT", Weight >= 1000) %>%
+        select(Wing, Weight, Tail)
+hSF
+```
+
+
+## 2.2 The arrange function
+
+```{r}
+head(arrange(hSF,Wing))
+```
+
+## 2.3 Join and rename functions
+```{r}
+species_code <- c("CH", "RT", "SS")
+species_name_full <- c("Cooper's", "Red_tailed", "Sharp_shinned")
+names <- data.frame(species_code, species_name_full)
+head(names)
+```
+
+```{r}
+
+```
+
+```{r}
+hawksFullName <- rename(left_join(rename(Hawks, species_code=Species), names, by="species_code"), Species=species_name_full)
+select(hawksFullName, Species, Wing, Weight)
+```
+
+```{r}
+head(select(hawksFullName, Species, Wing, Weight), 7)
+```
+
+
+## 2.4 The mutate function
+
+```{r}
+hawksWithBMI <- Hawks %>%
+  mutate(bird_BMI = 1000*Weight/Wing^2) %>%
+  select(Species, bird_BMI) %>%
+  arrange(desc(bird_BMI))
+head(hawksWithBMI, 8)
+```
+
+```{r}
+fit_hawks <- filter(hawksWithBMI, bird_BMI <= 100)
+fit_hawks
+```
+```{r}
+ggplot(data=fit_hawks, aes(x=bird_BMI, y=Species, fill=Species)) + geom_violin() + theme_bw() + xlab("Bird BMI") + ylab("Species")
+```
+
+
+## 2.5 Summarize and group-by functions
+
+```{r}
+hawksSummary <- hawksFullName %>%
+  mutate(tail_wing_ratio = Wing / Tail) %>%
+  group_by(Species) %>%
+  summarize(
+    num_rows=n(), mn_wing=mean(Wing, na.rm=T), md_wing=median(Wing, na.rm=T), t_mn_wing=mean(Wing, na.rm=T, trim=0.1), tail_wing_ratio=mean(tail_wing_ratio, na.rm=T)
+  )
+hawksSummary
+```
+
+
+```{r}
+naSummary <- hawksFullName %>% 
+  group_by(Species) %>%
+  summarize(across(everything(), ~sum(is.na(.x))))
+naSummary
+```
+
+
+# 3 Exploratory data analysis
+
+## 3.1 Combining location estimators with the summarise function
+
+```{r}
+newSummary_1 <- Hawks %>%
+  summarise(Wing_mean=mean(Wing, na.rm=T), Wing_t_mean=mean(Wing, na.r=T, trim=0.1), Wing_med=median(Wing, na.rm=T), Weight_mean=mean(Weight,na.rm=T), Weight_t_mean=mean(Weight, na.rm=T, trim=0.1), Weight_med=median(Weight,na.rm=T))
+newSummary_1
+```
+
+
+```{r}
+newSummary_2 <- Hawks %>%
+  group_by(Species) %>%
+  summarise(Wing_mean=mean(Wing, na.rm=T), Wing_t_mean=mean(Wing, na.r=T, trim=0.1), Wing_med=median(Wing, na.rm=T), Weight_mean=mean(Weight,na.rm=T), Weight_t_mean=mean(Weight, na.rm=T, trim=0.1), Weight_med=median(Weight,na.rm=T))
+newSummary_2
+```
+
+
+## 3.2 Location and dispersion estimatiors under linear transformations
+
+
+## 3.3 Robustness of location estimators
+```{r}
+hal <- Hawks$Hallux  # Extract the vector of hallux lengths
+hal <- hal[!is.na(hal)]  # Remove any nans
+```
+
+```{r}
+outlier_val <- 100
+num_outliers <- 10
+corrupted_hal <- c(hal, rep(outlier_val, times=num_outliers))
+
+mean(hal)
+mean(corrupted_hal)
+```
+
+```{r}
+num_outliers_vect <- seq(0, 1000)
+means_vect <- c()
+t_means_vect <- c()
+medians_vect <- c()
+
+for(num_outliers in num_outliers_vect){
+  corrupted_hal <- c(hal, rep(outlier_val, times=num_outliers))
+  means_vect <- c(means_vect, mean(corrupted_hal))
+  t_means_vect <- c(t_means_vect, mean(corrupted_hal, trim=0.1))
+  medians_vect <- c(medians_vect, median(corrupted_hal))
+}
+```
+
+
+```{r}
+df_means_medians <- data.frame(num_outliers=num_outliers_vect,
+                               mean=means_vect,
+                               t_mean=t_means_vect,
+                               median=medians_vect)
+```
+
+
+```{r}
+df_means_medians %>%
+  pivot_longer(!num_outliers, names_to = "Estimator", values_to = "Value") %>%
+  ggplot(aes(x=num_outliers, color=Estimator,
+             linttype=Estimator, y=Value)) + 
+  geom_line() + xlab("Numbers of outliers")
+```
+
+
+
+## 3.4 Box plots and outliers
+
+```{r}
+ggplot(data=hawksSmall, aes(x=Species, y=Weight)) + geom_boxplot() + xlab("Species") + ylab("Weight")
+```
+
+
+```{r}
+num_outliers <- function(x){
+  q25 <- quantile(x, 0.25, na.rm=1)
+  q75 <- quantile(x, 0.75, na.rm=1)
+  
+  IQR <- q75 - q25
+  return(length(x[((x < q25 - 1.5*IQR) | (x > q75 + 1.5*IQR))&!is.na(x)]))
+}
+
+
+Hawks %>%
+  group_by(Species) %>%
+  summarize(num_outliers_weight=num_outliers(Weight))
+```
+
+
+
+
 
