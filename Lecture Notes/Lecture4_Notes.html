@@ -324,7 +324,7 @@ f(3,1)</code></pre>
 </div>
 <div id="mutate" class="section level2">
 <h2>mutate()</h2>
-<p>create a new column as a funtion of existing columns</p>
+<p>create a new column as a function of existing columns</p>
 <pre class="r"><code>my_penguins &lt;- penguins %&gt;%
   mutate(flipper_bill_ratio = flipper_length_mm/bill_length_mm) %&gt;%
   select(species, bill_length_mm, flipper_length_mm, flipper_bill_ratio)
@@ -411,13 +411,8 @@ my_penguins</code></pre>
 <div id="across" class="section level2">
 <h2>across()</h2>
 <p>apply a function within summarize to all columns at once</p>
-<pre class="r"><code>summarize(penguins, across(everything(), ~sum(is.na(.x))))</code></pre>
-<pre><code>## # A tibble: 1 x 8
-##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g   sex
-##     &lt;int&gt;  &lt;int&gt;          &lt;int&gt;         &lt;int&gt;            &lt;int&gt;       &lt;int&gt; &lt;int&gt;
-## 1       0      0              2             2                2           2    11
-## # ... with 1 more variable: year &lt;int&gt;</code></pre>
-<pre class="r"><code>penguins %&gt;% 
+<pre class="r"><code># summarize(penguins, across(everything(), ~sum(is.na(.x))))
+penguins %&gt;% 
   summarize(across(everything(), ~sum(is.na(.x))))</code></pre>
 <pre><code>## # A tibble: 1 x 8
 ##   species island bill_length_mm bill_depth_mm flipper_length_~ body_mass_g   sex

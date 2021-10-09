@@ -211,6 +211,7 @@ ggplot(data=penguins, aes(y=flipper_length_mm, x=species)) + geom_boxplot() + yl
 ```{r}
 q25 <- quantile(flippers, 0.25, na.rm=1)
 q75 <- quantile(flippers, 0.75, na.rm=1)
+
 iq_range <- q75 - q25
 outliers <- flippers[(flippers > q75 + 1.5*iq_range) | (flippers < q25 - 1.5*iq_range)]
 outliers

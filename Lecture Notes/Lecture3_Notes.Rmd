@@ -142,6 +142,7 @@ trend_plot <- ggplot(data=filter(penguins, species=="Gentoo"), aes(y=body_mass_g
 trend_plot + geom_smooth()
 ```
 
+
 ```{r}
 trend_plot + geom_smooth(method="lm")
 ```
