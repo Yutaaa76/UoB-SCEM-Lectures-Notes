@@ -1,0 +1,13 @@
+---
+title: 'Lecture6 Notes: Tidy data and iteration'
+author: "Wenjie Qi"
+date: "2021/10/10"
+output: html_document
+---
+
+# What is tidy data?
+
+* Each row corresponds to a specific and unique observation representing a similar sort of thing.
+* Columns correspond to variables with the same sort of value in each row.
+
+Tidy data is typically far easier to manipulate and apply statistical analysis to in R.
