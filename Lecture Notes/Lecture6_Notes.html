@@ -171,13 +171,493 @@ pre code {
 </div>
 
 
-<div id="what-is-tidy-data" class="section level1">
-<h1>What is tidy data?</h1>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## 载入程辑包：&#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(palmerpenguins)
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --</code></pre>
+<pre><code>## v ggplot2 3.3.5     v purrr   0.3.4
+## v tibble  3.1.5     v stringr 1.4.0
+## v tidyr   1.1.4     v forcats 0.5.1
+## v readr   2.0.2</code></pre>
+<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(tidyr)
+library(english)</code></pre>
+<div id="tidy-data" class="section level1">
+<h1>Tidy data</h1>
+<div id="what-is-tidy-data" class="section level2">
+<h2>What is tidy data?</h2>
 <ul>
 <li>Each row corresponds to a specific and unique observation representing a similar sort of thing.</li>
 <li>Columns correspond to variables with the same sort of value in each row.</li>
 </ul>
-<p><span class="math inline">\(Tidy data is typically far easier to manipulate and apply statistical analysis to.\)</span></p>
+<p>Tidy data is typically far easier to manipulate and apply statistical analysis to in R.</p>
+</div>
+<div id="reshaping-data" class="section level2">
+<h2>Reshaping data</h2>
+<pre class="r"><code>species &lt;- as.factor(c(&quot;Adelie&quot;, &quot;Adelie&quot;, &quot;Adelie&quot;, &quot;Chinstrap&quot;, &quot;Chinstrap&quot;, &quot;Chinstrap&quot;, &quot;Gentoo&quot;, &quot;Gentoo&quot;, &quot;Gentoo&quot;))
+property &lt;- c(&quot;bill&quot;, &quot;flipper&quot;, &quot;weight&quot;, &quot;bill&quot;, &quot;flipper&quot;, &quot;weight&quot;, &quot;bill&quot;, &quot;flipper&quot;, &quot;weight&quot;)
+value &lt;- c(38.8, 190., 3701., 48.8, 196., 3733., 47.5, 217., 5076.)
+
+penguins_summary_narrow = as_tibble(data.frame(species, property, value))
+penguins_summary_narrow</code></pre>
+<pre><code>## # A tibble: 9 x 3
+##   species   property  value
+##   &lt;fct&gt;     &lt;chr&gt;     &lt;dbl&gt;
+## 1 Adelie    bill       38.8
+## 2 Adelie    flipper   190  
+## 3 Adelie    weight   3701  
+## 4 Chinstrap bill       48.8
+## 5 Chinstrap flipper   196  
+## 6 Chinstrap weight   3733  
+## 7 Gentoo    bill       47.5
+## 8 Gentoo    flipper   217  
+## 9 Gentoo    weight   5076</code></pre>
+<div id="pivot_wider" class="section level3">
+<h3>pivot_wider()</h3>
+<pre class="r"><code>penguins_summary_narrow &lt;- penguins_summary_narrow %&gt;%
+  pivot_wider(names_from = property, values_from = value)  # 3 arguments: df, names_from, value_from
+
+penguins_summary_narrow</code></pre>
+<pre><code>## # A tibble: 3 x 4
+##   species    bill flipper weight
+##   &lt;fct&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;
+## 1 Adelie     38.8     190   3701
+## 2 Chinstrap  48.8     196   3733
+## 3 Gentoo     47.5     217   5076</code></pre>
+</div>
+<div id="pivot_longer" class="section level3">
+<h3>pivot_longer()</h3>
+<pre class="r"><code>penguins_summary_narrow %&gt;%
+  pivot_longer(cols = c(&quot;bill&quot;, &quot;flipper&quot;, &quot;weight&quot;), names_to = &quot;property&quot;, values_to = &quot;value&quot;)</code></pre>
+<pre><code>## # A tibble: 9 x 3
+##   species   property  value
+##   &lt;fct&gt;     &lt;chr&gt;     &lt;dbl&gt;
+## 1 Adelie    bill       38.8
+## 2 Adelie    flipper   190  
+## 3 Adelie    weight   3701  
+## 4 Chinstrap bill       48.8
+## 5 Chinstrap flipper   196  
+## 6 Chinstrap weight   3733  
+## 7 Gentoo    bill       47.5
+## 8 Gentoo    flipper   217  
+## 9 Gentoo    weight   5076</code></pre>
+<div id="a-more-efficient-way" class="section level4">
+<h4>a more efficient way</h4>
+<pre class="r"><code>penguins_summary_narrow %&gt;%
+  pivot_longer(cols = !species, names_to = &quot;property&quot;, values_to = &quot;value&quot;)</code></pre>
+<pre><code>## # A tibble: 9 x 3
+##   species   property  value
+##   &lt;fct&gt;     &lt;chr&gt;     &lt;dbl&gt;
+## 1 Adelie    bill       38.8
+## 2 Adelie    flipper   190  
+## 3 Adelie    weight   3701  
+## 4 Chinstrap bill       48.8
+## 5 Chinstrap flipper   196  
+## 6 Chinstrap weight   3733  
+## 7 Gentoo    bill       47.5
+## 8 Gentoo    flipper   217  
+## 9 Gentoo    weight   5076</code></pre>
+</div>
+</div>
+</div>
+<div id="pivoting-for-tidy-data" class="section level2">
+<h2>Pivoting for tidy data</h2>
+<pre class="r"><code>name &lt;- c(&quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;)
+`2018` &lt;- c(5., 9., 3.)
+`2019` &lt;- c(9., 7., 2.)
+wins_df_wide &lt;- as_tibble(data.frame(name, `2018`, `2019`))
+
+`2018` &lt;- c(7., 15., 12.)
+`2019` &lt;- c(8., 4., 10.)
+losses_df_wide &lt;- as_tibble(data.frame(name, `2018`, `2019`))
+
+wins_df_wide</code></pre>
+<pre><code>## # A tibble: 3 x 3
+##   name    X2018 X2019
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1 Alice       5     9
+## 2 Bob         9     7
+## 3 Charlie     3     2</code></pre>
+<pre class="r"><code>losses_df_wide</code></pre>
+<pre><code>## # A tibble: 3 x 3
+##   name    X2018 X2019
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1 Alice       7     8
+## 2 Bob        15     4
+## 3 Charlie    12    10</code></pre>
+<div id="paivot_longer" class="section level3">
+<h3>paivot_longer()</h3>
+<pre class="r"><code>wins_df_narrow &lt;- wins_df_wide%&gt;%
+  pivot_longer(!name, names_to = &quot;year&quot;, values_to = &quot;wins&quot;)
+wins_df_narrow</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   name    year   wins
+##   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;
+## 1 Alice   X2018     5
+## 2 Alice   X2019     9
+## 3 Bob     X2018     9
+## 4 Bob     X2019     7
+## 5 Charlie X2018     3
+## 6 Charlie X2019     2</code></pre>
+<pre class="r"><code>losses_df_narrow &lt;- losses_df_wide %&gt;%
+  pivot_longer(!name, names_to = &quot;year&quot;, values_to = &quot;losses&quot;)
+losses_df_narrow</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   name    year  losses
+##   &lt;chr&gt;   &lt;chr&gt;  &lt;dbl&gt;
+## 1 Alice   X2018      7
+## 2 Alice   X2019      8
+## 3 Bob     X2018     15
+## 4 Bob     X2019      4
+## 5 Charlie X2018     12
+## 6 Charlie X2019     10</code></pre>
+<pre class="r"><code>wins_losses_df &lt;- inner_join(wins_df_narrow, losses_df_narrow) %&gt;%
+  mutate(win_rat = wins/ (wins + losses))</code></pre>
+<pre><code>## Joining, by = c(&quot;name&quot;, &quot;year&quot;)</code></pre>
+<pre class="r"><code>wins_losses_df</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   name    year   wins losses win_rat
+##   &lt;chr&gt;   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Alice   X2018     5      7   0.417
+## 2 Alice   X2019     9      8   0.529
+## 3 Bob     X2018     9     15   0.375
+## 4 Bob     X2019     7      4   0.636
+## 5 Charlie X2018     3     12   0.2  
+## 6 Charlie X2019     2     10   0.167</code></pre>
+</div>
+</div>
+<div id="uniting-and-separating-data" class="section level2">
+<h2>Uniting and separating data</h2>
+<pre class="r"><code>name &lt;- c(&quot;Alice&quot;, &quot;Alice&quot;, &quot;Bob&quot;, &quot;Bob&quot;, &quot;Charlie&quot;, &quot;Charlie&quot;)
+year &lt;- c(&quot;2018&quot;, &quot;2019&quot;, &quot;2018&quot;, &quot;2019&quot;, &quot;2018&quot;, &quot;2019&quot;)
+w_over_t &lt;- c(&quot;5/12&quot;, &quot;9/17&quot;, &quot;9/24&quot;, &quot;7/11&quot;, &quot;3/15&quot;, &quot;2/12&quot;)
+wins_over_total_df &lt;- as_tibble(data.frame(name, year, w_over_t))
+wins_over_total_df</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   name    year  w_over_t
+##   &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;   
+## 1 Alice   2018  5/12    
+## 2 Alice   2019  9/17    
+## 3 Bob     2018  9/24    
+## 4 Bob     2019  7/11    
+## 5 Charlie 2018  3/15    
+## 6 Charlie 2019  2/12</code></pre>
+<div id="separate" class="section level3">
+<h3>separate()</h3>
+<pre class="r"><code>sep_df &lt;- wins_over_total_df %&gt;%
+  separate(w_over_t, into = c(&quot;wins&quot;, &quot;totals&quot;), sep = &quot;/&quot;, convert = T)  # convert = T
+sep_df</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   name    year   wins totals
+##   &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;  &lt;int&gt;
+## 1 Alice   2018      5     12
+## 2 Alice   2019      9     17
+## 3 Bob     2018      9     24
+## 4 Bob     2019      7     11
+## 5 Charlie 2018      3     15
+## 6 Charlie 2019      2     12</code></pre>
+<pre class="r"><code>sep_df %&gt;%
+  mutate(losses = totals - wins) %&gt;%
+  select(-totals)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   name    year   wins losses
+##   &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;  &lt;int&gt;
+## 1 Alice   2018      5      7
+## 2 Alice   2019      9      8
+## 3 Bob     2018      9     15
+## 4 Bob     2019      7      4
+## 5 Charlie 2018      3     12
+## 6 Charlie 2019      2     10</code></pre>
+</div>
+<div id="unite" class="section level3">
+<h3>unite()</h3>
+<pre class="r"><code>uni_df &lt;- sep_df %&gt;%
+  unite(w_over_t, wins, totals, sep=&quot;/&quot;)
+uni_df</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   name    year  w_over_t
+##   &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt;   
+## 1 Alice   2018  5/12    
+## 2 Alice   2019  9/17    
+## 3 Bob     2018  9/24    
+## 4 Bob     2019  7/11    
+## 5 Charlie 2018  3/15    
+## 6 Charlie 2019  2/12</code></pre>
+</div>
+</div>
+</div>
+<div id="iteration" class="section level1">
+<h1>Iteration</h1>
+<div id="map" class="section level2">
+<h2>map()</h2>
+<pre class="r"><code>is_div_2_3 &lt;- function(x){
+  if(x %% 2 == 0){
+    return(T)
+  }else if(x %% 3 ==0){
+    return(T)
+  }else{
+    return(F)
+  }
+}
+is_div_2_3(3)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>v &lt;- c(1, 2, 3, 4, 5)
+is_div_2_3(v)</code></pre>
+<pre><code>## Warning in if (x%%2 == 0) {: 条件的长度大于一，因此只能用其第一元素</code></pre>
+<pre><code>## Warning in if (x%%3 == 0) {: 条件的长度大于一，因此只能用其第一元素</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code>map(v, is_div_2_3)</code></pre>
+<pre><code>## [[1]]
+## [1] FALSE
+## 
+## [[2]]
+## [1] TRUE
+## 
+## [[3]]
+## [1] TRUE
+## 
+## [[4]]
+## [1] TRUE
+## 
+## [[5]]
+## [1] FALSE</code></pre>
+<div id="map_lgl" class="section level3">
+<h3>map_lgl()</h3>
+<pre class="r"><code>map_lgl(v, is_div_2_3)</code></pre>
+<pre><code>## [1] FALSE  TRUE  TRUE  TRUE FALSE</code></pre>
+</div>
+<div id="map_dbl" class="section level3">
+<h3>map_dbl()</h3>
+<pre class="r"><code>example_f &lt;- function(x){
+  if(is_div_2_3(x)){
+    return(x)
+  }else{
+    return(0)
+  }
+}
+
+map_dbl(v, example_f)</code></pre>
+<pre><code>## [1] 0 2 3 4 0</code></pre>
+</div>
+<div id="map_chr" class="section level3">
+<h3>map_chr()</h3>
+<pre class="r"><code>example_f_eng &lt;- function(x){
+  as.character(as.english(example_f(x)))
+}
+
+map_chr(v, example_f_eng)</code></pre>
+<pre><code>## [1] &quot;zero&quot;  &quot;two&quot;   &quot;three&quot; &quot;four&quot;  &quot;zero&quot;</code></pre>
+</div>
+</div>
+<div id="vectorization" class="section level2">
+<h2>Vectorization</h2>
+<pre class="r"><code>is_div_2_3_vect &lt;- function(x){
+  return(x %% 2 == 0 | x %% 3 == 0)
+}
+is_div_2_3_vect(v)</code></pre>
+<pre><code>## [1] FALSE  TRUE  TRUE  TRUE FALSE</code></pre>
+<pre class="r"><code>example_f_vect &lt;- function(x){
+  return(x * is_div_2_3_vect(x))
+}
+example_f_vect(v)</code></pre>
+<pre><code>## [1] 0 2 3 4 0</code></pre>
+<pre class="r"><code>#example_f_eng_vect &lt;- function(x){
+#  return(as.english(example_f_eng_vect(x)))
+#}
+#example_f_eng_vect(v)</code></pre>
+</div>
+</div>
+<div id="nesting-and-unnesting" class="section level1">
+<h1>Nesting and unnesting</h1>
+<pre class="r"><code>name &lt;- c(&quot;Mick&quot;, &quot;John&quot;, &quot;Paul&quot;, &quot;Keith&quot;)
+band &lt;- c(&quot;Stones&quot;, &quot;Beatles&quot;, &quot;Beatles&quot;, NA)
+plays &lt;- c(NA, &quot;guitar&quot;, &quot;bass&quot;, &quot;guitar&quot;)
+musicians &lt;- data.frame(name, band, plays)
+musicians</code></pre>
+<pre><code>##    name    band  plays
+## 1  Mick  Stones   &lt;NA&gt;
+## 2  John Beatles guitar
+## 3  Paul Beatles   bass
+## 4 Keith    &lt;NA&gt; guitar</code></pre>
+<div id="nest" class="section level2">
+<h2>nest()</h2>
+<pre class="r"><code>musicians_nested &lt;- musicians %&gt;%
+  group_by(name) %&gt;%
+  nest()
+musicians_nested</code></pre>
+<pre><code>## # A tibble: 4 x 2
+## # Groups:   name [4]
+##   name  data            
+##   &lt;chr&gt; &lt;list&gt;          
+## 1 Mick  &lt;tibble [1 x 2]&gt;
+## 2 John  &lt;tibble [1 x 2]&gt;
+## 3 Paul  &lt;tibble [1 x 2]&gt;
+## 4 Keith &lt;tibble [1 x 2]&gt;</code></pre>
+</div>
+<div id="unnest" class="section level2">
+<h2>unnest()</h2>
+<pre class="r"><code>musicians_unnested &lt;- musicians_nested %&gt;%
+  unnest(cols = data)
+musicians_unnested</code></pre>
+<pre><code>## # A tibble: 4 x 3
+## # Groups:   name [4]
+##   name  band    plays 
+##   &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; 
+## 1 Mick  Stones  &lt;NA&gt;  
+## 2 John  Beatles guitar
+## 3 Paul  Beatles bass  
+## 4 Keith &lt;NA&gt;    guitar</code></pre>
+</div>
+</div>
+<div id="map-nest" class="section level1">
+<h1>map() &amp; nest()</h1>
+<div id="create-a-function-which" class="section level2">
+<h2>create a function which:</h2>
+<ul>
+<li>takes as input a data frame and variable name</li>
+<li>computes the correlation with all other numeric variables</li>
+<li>return the name of the variable with maximal absolute correlation, and the correspongding correlation</li>
+</ul>
+<pre class="r"><code>max_cor_var &lt;-function(df, col_name){
+  
+  v_col &lt;- df %&gt;%
+    select(all_of(col_name))  # extract variable based on col_name
+  
+  df_num &lt;- df %&gt;%
+    select_if(is.numeric) %&gt;%
+    select(-all_of(col_name))  # select all numeric variables excluding col_name
+  
+  correlations &lt;- unlist(map(df_num, function(x){
+    cor(x, v_col, use = &quot;complete.obs&quot;)
+  }))  # compute correlations with all other numeric variables
+
+  
+  max_abs_cor_var &lt;- names(which(abs(correlations) == max(abs(correlations))))  # extract the variable name
+  cor &lt;- as.double(correlations[max_abs_cor_var])  # compute the correlation
+  
+  return(data.frame(var_name = max_abs_cor_var, cor = cor))  # return dataframe
+}
+
+penguins %&gt;%
+  max_cor_var(&quot;body_mass_g&quot;)</code></pre>
+<pre><code>##            var_name       cor
+## 1 flipper_length_mm 0.8712018</code></pre>
+</div>
+<div id="combine-nest-and-unnest-to-compute-the-variable-with-maximal-correlation" class="section level2">
+<h2>combine nest() and unnest() to compute the variable with maximal correlation</h2>
+<pre class="r"><code>penguins %&gt;%
+  group_by(species) %&gt;%
+  nest() %&gt;%
+  mutate(max_cor = map(data, ~max_cor_var(.x, &quot;body_mass_g&quot;))) %&gt;%   # ?????????????????????????????????? ??????
+  select(-data) %&gt;%
+  unnest(cols = max_cor)</code></pre>
+<pre><code>## # A tibble: 3 x 3
+## # Groups:   species [3]
+##   species   var_name            cor
+##   &lt;fct&gt;     &lt;chr&gt;             &lt;dbl&gt;
+## 1 Adelie    bill_depth_mm     0.576
+## 2 Gentoo    bill_depth_mm     0.719
+## 3 Chinstrap flipper_length_mm 0.642</code></pre>
+</div>
+</div>
+<div id="missing-data-and-map" class="section level1">
+<h1>Missing data and map()</h1>
+<ol style="list-style-type: decimal">
+<li>Explicit missing data: The value of an individual variable replaced with “NA”.</li>
+<li>Implicit missing data: Entire rows missing from a data frame.</li>
+</ol>
+<pre class="r"><code>name &lt;- c(&quot;Alice&quot;, &quot;Charlie&quot;, &quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;)
+year &lt;- c(2018, 2018, 2019, 2019, 2019)
+wins &lt;- c(5, 9, 3, 9, 7)
+losses &lt;- c(7, NA, 12, 8, 4)
+
+w_l &lt;- data.frame(name, year, wins, losses)
+w_l</code></pre>
+<pre><code>##      name year wins losses
+## 1   Alice 2018    5      7
+## 2 Charlie 2018    9     NA
+## 3   Alice 2019    3     12
+## 4     Bob 2019    9      8
+## 5 Charlie 2019    7      4</code></pre>
+<div id="complete-make-implicit-missing-data-into-explicit-missing-data" class="section level2">
+<h2>complete(): make implicit missing data into explicit missing data</h2>
+<pre class="r"><code>w_l_na &lt;- w_l %&gt;% 
+  complete(name, year)
+w_l_na</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   name     year  wins losses
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1 Alice    2018     5      7
+## 2 Alice    2019     3     12
+## 3 Bob      2018    NA     NA
+## 4 Bob      2019     9      8
+## 5 Charlie  2018     9     NA
+## 6 Charlie  2019     7      4</code></pre>
+</div>
+<div id="complete.cases" class="section level2">
+<h2>complete.cases()</h2>
+<p>get the rows for which there are no NAs, but can lead to reduction in the number of rows and a substantial loss of information</p>
+<pre class="r"><code>complete.cases(w_l)</code></pre>
+<pre><code>## [1]  TRUE FALSE  TRUE  TRUE  TRUE</code></pre>
+<pre class="r"><code>w_l %&gt;%
+  filter(complete.cases(.))  </code></pre>
+<pre><code>##      name year wins losses
+## 1   Alice 2018    5      7
+## 2   Alice 2019    3     12
+## 3     Bob 2019    9      8
+## 4 Charlie 2019    7      4</code></pre>
+</div>
+<div id="imputation-by-meanmu" class="section level2">
+<h2>Imputation by mean(<span class="math inline">\(\mu\)</span>)</h2>
+<pre class="r"><code>impute_by_mean &lt;- function(x){
+  
+  mu &lt;- mean(x, na.rm=1) # first compute the mean of x
+  
+  impute_f &lt;- function(z){  # coordinate-wise imputation
+    if(is.na(z)){
+      return(mu)  # if z is na replace with mean
+    }else{
+      return(z)  # otherwise leave in place
+    }
+  }
+  
+  return(map_dbl(x, impute_f))  # apply the map function to impute across vector
+}</code></pre>
+<pre class="r"><code>x &lt;- c(1, 2, NA, 4)
+impute_by_mean(x)</code></pre>
+<pre><code>## [1] 1.000000 2.000000 2.333333 4.000000</code></pre>
+<pre class="r"><code>w_l_na</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   name     year  wins losses
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1 Alice    2018     5      7
+## 2 Alice    2019     3     12
+## 3 Bob      2018    NA     NA
+## 4 Bob      2019     9      8
+## 5 Charlie  2018     9     NA
+## 6 Charlie  2019     7      4</code></pre>
+<pre class="r"><code>w_l_na %&gt;%
+  mutate(wins = impute_by_mean(wins), losses = impute_by_mean(losses))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   name     year  wins losses
+##   &lt;chr&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1 Alice    2018   5     7   
+## 2 Alice    2019   3    12   
+## 3 Bob      2018   6.6   7.75
+## 4 Bob      2019   9     8   
+## 5 Charlie  2018   9     7.75
+## 6 Charlie  2019   7     4</code></pre>
+</div>
 </div>
 
 

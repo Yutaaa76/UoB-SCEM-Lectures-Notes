@@ -5,9 +5,347 @@ date: "2021/10/10"
 output: html_document
 ---
 
-# What is tidy data?
+
+```{r}
+library(dplyr)
+library(palmerpenguins)
+library(tidyverse)
+library(tidyr)
+library(english)
+```
+
+# Tidy data
+
+
+## What is tidy data?
 
 * Each row corresponds to a specific and unique observation representing a similar sort of thing.
 * Columns correspond to variables with the same sort of value in each row.
 
 Tidy data is typically far easier to manipulate and apply statistical analysis to in R.
+
+
+## Reshaping data
+
+```{r}
+species <- as.factor(c("Adelie", "Adelie", "Adelie", "Chinstrap", "Chinstrap", "Chinstrap", "Gentoo", "Gentoo", "Gentoo"))
+property <- c("bill", "flipper", "weight", "bill", "flipper", "weight", "bill", "flipper", "weight")
+value <- c(38.8, 190., 3701., 48.8, 196., 3733., 47.5, 217., 5076.)
+
+penguins_summary_narrow = as_tibble(data.frame(species, property, value))
+penguins_summary_narrow
+```
+
+
+### pivot_wider()
+```{r}
+penguins_summary_narrow <- penguins_summary_narrow %>%
+  pivot_wider(names_from = property, values_from = value)  # 3 arguments: df, names_from, value_from
+
+penguins_summary_narrow
+```
+
+
+### pivot_longer()
+```{r}
+penguins_summary_narrow %>%
+  pivot_longer(cols = c("bill", "flipper", "weight"), names_to = "property", values_to = "value")
+```
+
+#### a more efficient way
+```{r}
+penguins_summary_narrow %>%
+  pivot_longer(cols = !species, names_to = "property", values_to = "value")
+```
+
+
+
+## Pivoting for tidy data
+
+```{r}
+name <- c("Alice", "Bob", "Charlie")
+`2018` <- c(5., 9., 3.)
+`2019` <- c(9., 7., 2.)
+wins_df_wide <- as_tibble(data.frame(name, `2018`, `2019`))
+
+`2018` <- c(7., 15., 12.)
+`2019` <- c(8., 4., 10.)
+losses_df_wide <- as_tibble(data.frame(name, `2018`, `2019`))
+
+wins_df_wide
+losses_df_wide
+```
+
+### paivot_longer()
+```{r}
+wins_df_narrow <- wins_df_wide%>%
+  pivot_longer(!name, names_to = "year", values_to = "wins")
+wins_df_narrow
+
+losses_df_narrow <- losses_df_wide %>%
+  pivot_longer(!name, names_to = "year", values_to = "losses")
+losses_df_narrow
+```
+
+```{r}
+wins_losses_df <- inner_join(wins_df_narrow, losses_df_narrow) %>%
+  mutate(win_rat = wins/ (wins + losses))
+
+wins_losses_df
+```
+
+
+## Uniting and separating data
+
+```{r}
+name <- c("Alice", "Alice", "Bob", "Bob", "Charlie", "Charlie")
+year <- c("2018", "2019", "2018", "2019", "2018", "2019")
+w_over_t <- c("5/12", "9/17", "9/24", "7/11", "3/15", "2/12")
+wins_over_total_df <- as_tibble(data.frame(name, year, w_over_t))
+wins_over_total_df
+```
+
+
+### separate()
+```{r}
+sep_df <- wins_over_total_df %>%
+  separate(w_over_t, into = c("wins", "totals"), sep = "/", convert = T)  # convert = T
+sep_df
+```
+
+
+```{r}
+sep_df %>%
+  mutate(losses = totals - wins) %>%
+  select(-totals)
+```
+
+
+### unite()
+```{r}
+uni_df <- sep_df %>%
+  unite(w_over_t, wins, totals, sep="/")
+uni_df
+```
+
+
+
+
+# Iteration
+
+## map()
+```{r}
+is_div_2_3 <- function(x){
+  if(x %% 2 == 0){
+    return(T)
+  }else if(x %% 3 ==0){
+    return(T)
+  }else{
+    return(F)
+  }
+}
+is_div_2_3(3)
+```
+
+```{r}
+v <- c(1, 2, 3, 4, 5)
+is_div_2_3(v)
+```
+
+```{r}
+map(v, is_div_2_3)
+```
+
+### map_lgl()
+```{r}
+map_lgl(v, is_div_2_3)
+```
+
+### map_dbl()
+```{r}
+example_f <- function(x){
+  if(is_div_2_3(x)){
+    return(x)
+  }else{
+    return(0)
+  }
+}
+
+map_dbl(v, example_f)
+```
+
+### map_chr()
+```{r}
+example_f_eng <- function(x){
+  as.character(as.english(example_f(x)))
+}
+
+map_chr(v, example_f_eng)
+```
+
+
+
+## Vectorization
+```{r}
+is_div_2_3_vect <- function(x){
+  return(x %% 2 == 0 | x %% 3 == 0)
+}
+is_div_2_3_vect(v)
+```
+
+```{r}
+example_f_vect <- function(x){
+  return(x * is_div_2_3_vect(x))
+}
+example_f_vect(v)
+```
+
+```{r}
+#example_f_eng_vect <- function(x){
+#  return(as.english(example_f_eng_vect(x)))
+#}
+#example_f_eng_vect(v)
+```
+
+
+# Nesting and unnesting
+
+```{r}
+name <- c("Mick", "John", "Paul", "Keith")
+band <- c("Stones", "Beatles", "Beatles", NA)
+plays <- c(NA, "guitar", "bass", "guitar")
+musicians <- data.frame(name, band, plays)
+musicians
+```
+
+## nest()
+
+```{r}
+musicians_nested <- musicians %>%
+  group_by(name) %>%
+  nest()
+musicians_nested
+```
+
+## unnest()
+```{r}
+musicians_unnested <- musicians_nested %>%
+  unnest(cols = data)
+musicians_unnested
+```
+
+
+# map() & nest()
+
+## create a function which:
+*   takes as input a data frame and variable name
+*   computes the correlation with all other numeric variables
+*   return the name of the variable with maximal absolute correlation, and the correspongding correlation
+
+```{r}
+max_cor_var <-function(df, col_name){
+  
+  v_col <- df %>%
+    select(all_of(col_name))  # extract variable based on col_name
+  
+  df_num <- df %>%
+    select_if(is.numeric) %>%
+    select(-all_of(col_name))  # select all numeric variables excluding col_name
+  
+  correlations <- unlist(map(df_num, function(x){
+    cor(x, v_col, use = "complete.obs")
+  }))  # compute correlations with all other numeric variables
+
+  
+  max_abs_cor_var <- names(which(abs(correlations) == max(abs(correlations))))  # extract the variable name
+  cor <- as.double(correlations[max_abs_cor_var])  # compute the correlation
+  
+  return(data.frame(var_name = max_abs_cor_var, cor = cor))  # return dataframe
+}
+
+penguins %>%
+  max_cor_var("body_mass_g")
+```
+
+
+## combine nest() and unnest() to compute the variable with maximal correlation
+```{r}
+penguins %>%
+  group_by(species) %>%
+  nest() %>%
+  mutate(max_cor = map(data, ~max_cor_var(.x, "body_mass_g"))) %>%   # ?????????????????????????????????? ??????
+  select(-data) %>%
+  unnest(cols = max_cor)
+```
+
+
+
+# Missing data and map()
+
+1. Explicit missing data: The value of an individual variable replaced with "NA".
+2. Implicit missing data: Entire rows missing from a data frame.
+
+```{r}
+name <- c("Alice", "Charlie", "Alice", "Bob", "Charlie")
+year <- c(2018, 2018, 2019, 2019, 2019)
+wins <- c(5, 9, 3, 9, 7)
+losses <- c(7, NA, 12, 8, 4)
+
+w_l <- data.frame(name, year, wins, losses)
+w_l
+```
+
+
+## complete(): make implicit missing data into explicit missing data
+```{r}
+w_l_na <- w_l %>% 
+  complete(name, year)
+w_l_na
+```
+
+
+## complete.cases()
+get the rows for which there are no NAs, but can lead to reduction in the number of rows and a substantial loss of information
+```{r}
+complete.cases(w_l)
+```
+
+```{r}
+w_l %>%
+  filter(complete.cases(.))  
+```
+
+
+## Imputation by mean($\mu$)
+
+```{r}
+impute_by_mean <- function(x){
+  
+  mu <- mean(x, na.rm=1) # first compute the mean of x
+  
+  impute_f <- function(z){  # coordinate-wise imputation
+    if(is.na(z)){
+      return(mu)  # if z is na replace with mean
+    }else{
+      return(z)  # otherwise leave in place
+    }
+  }
+  
+  return(map_dbl(x, impute_f))  # apply the map function to impute across vector
+}
+```
+
+```{r}
+x <- c(1, 2, NA, 4)
+impute_by_mean(x)
+```
+
+```{r}
+w_l_na
+```
+
+
+```{r}
+w_l_na %>%
+  mutate(wins = impute_by_mean(wins), losses = impute_by_mean(losses))
+```
