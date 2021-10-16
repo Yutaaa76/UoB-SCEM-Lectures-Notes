@@ -243,7 +243,7 @@ musicians_unnested
 *   return the name of the variable with maximal absolute correlation, and the correspongding correlation
 
 ```{r}
-max_cor_var <-function(df, col_name){
+max_cor_var <- function(df, col_name){
   
   v_col <- df %>%
     select(all_of(col_name))  # extract variable based on col_name

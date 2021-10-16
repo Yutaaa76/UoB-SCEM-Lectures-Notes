@@ -6,3 +6,295 @@ output: html_document
 ---
 
 
+# 1.  Random experiments, events and sample spaces
+
+* Random experiment:
+a procedure which:
+  (a) has a well-defined set of possible outcomes;
+  (b) could (at least in principle) be repeated arbitrarily many times.
+
+
+* Event:
+a set of possible outcomes.
+
+* Sample space:
+the set of all possible outcomes of interest for a random experiment.
+
+# 2. Tidy data and iteration
+## 2.1 Missing data and iteration
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(palmerpenguins)
+
+data("penguins")
+```
+
+
+```{r}
+impute_by_mean <- function(x){
+  mu <- mean(x, na.rm = 1)  # first compute the mean of x
+  
+  impute_f <- function(z){  # coordinate-wise imputation
+    if(is.na(z)){
+      return(mu)
+    }else{
+      return(z)
+    }
+  }
+  
+  return(map_dbl(x, impute_f))  #apply the map function to the impute across vector
+}
+```
+
+```{r}
+impute_by_median <- function(x){
+  med <- median(x, na.rm=1)
+  
+  impute_f <- function(z){
+    if(is.na(z)){
+      return(med)
+    }else{
+      return(z)
+    }
+  }
+  
+  return(map_dbl(x, impute_f))
+}
+
+v <- c(1, 2, NA, 4)
+impute_by_median(v)
+```
+
+```{r}
+x <- c(seq(0, 10, 0.1))
+x
+y <- 5 * x + 1
+
+df_xy <- data.frame(x, y)
+df_xy %>% head()
+```
+
+```{r}
+df_xy %>% 
+  mutate(z = map2_dbl(x, y, ~.x+.y)) %>%
+  head(5)
+```
+
+
+## df with missing data
+
+```{r}
+sometimes_missing <- function(index, value){
+  if(index %% 5 == 0)
+    return(NA)
+  else
+    return(value)
+}
+```
+
+
+```{r}
+x <- seq(0, 10, 0.1)
+df_xy_missing <- as.tibble(data.frame(x))
+
+df_xy_missing <- df_xy_missing %>%
+  # mutate(y_missing = map2_dbl(x, y, ~sometimes_missing(row_number(), .y)))
+  mutate(y = map2_dbl(.x=row_number(), .y=y, ~sometimes_missing(.x, .y)))
+df_xy_missing
+```
+
+```{r}
+# x <- seq(0, 10, 0.1)
+# y_missing <- c()
+# for(i in 1:101){
+#   if(i%%5==0)
+#     y_missing[i] <- NA
+#   else
+#     y_missing[i] <- 5*x[i]+1
+# }
+# df_xy_missing <- data.frame(x, y_missing)
+# df_xy_missing %>% head(10)
+```
+
+```{r}
+x <- seq(0, 10, 0.1)
+df_xy_imputed <- data.frame(x)
+df_xy_imputed <- df_xy_imputed %>%
+  mutate(y = impute_by_median(df_xy_missing$y))
+df_xy_imputed
+```
+
+
+```{r}
+#names(df_xy_missing)[names(df_xy_missing) == "y_missing"] <- "y"
+#names(df_xy_imputed)[names(df_xy_imputed) == "y_imputed"] <- "y"
+
+df_xy <- df_xy %>%
+  mutate(source="original") 
+
+df_xy_missing <- df_xy_missing %>%
+  mutate(source="corrupted")
+
+df_xy_imputed <- df_xy_imputed %>%
+  mutate(source="imputated")
+
+df_combined <- combine(df_xy, df_xy_missing, df_xy_imputed)
+```
+
+```{r}
+ggplot(df_combined, aes(x=x, y=y, color=source)) +geom_point() + facet_wrap(~source) + geom_smooth(method="lm")
+```
+
+
+## 2.2 Tidying data with pivot functions
+
+```{r}
+library(readxl)
+```
+
+```{r}
+folder_path <- "D:\\Develop\\Projects\\R\\SCEM\\Lectures\\Assignments\\"
+
+file_name <- "HockeyLeague.xlsx"
+
+file_path <- paste(folder_path, file_name, sep="")
+
+wins_data_frame <- read_excel(file_path, sheet="Wins")
+losses_data_frame <-read_excel(file_path, sheet="Losses")
+```
+
+
+```{r}
+wins_data_frame %>%
+  select(1:5) %>% 
+  head(3)
+```
+
+```{r}
+wins_tidy <- wins_data_frame %>%
+  rename(Team = ...1) %>%
+  pivot_longer(!Team, names_to = "Year", names_transform = list(Year = as.integer), values_to = "w_over_t") %>%
+  separate(w_over_t, into = c("Wins", "Total"), sep = " of ", convert = T)
+
+wins_tidy %>% dim()
+wins_tidy %>% head(5)
+```
+
+
+
+```{r}
+losses_data_frame %>%
+  select(1:5) %>%
+  head(3)
+```
+
+```{r}
+losses_tidy <- losses_data_frame %>%
+  rename(Team = ...1) %>%
+  pivot_longer(!Team, names_to = "Year", names_transform = list(Year = as.integer), values_to = "l_over_t") %>%
+  separate(l_over_t, into = c("Losses", "Total"), sep = " of ", convert = T)
+
+losses_tidy %>% dim()
+losses_tidy %>% head(5)
+```
+
+
+```{r}
+hockey_df <- wins_tidy %>%
+  inner_join(losses_tidy) %>%
+  mutate(Draws = Total - Wins - Losses) %>%
+  mutate(across(!c(Team, Year, Total), ~ .x / Total, .names = "{col}_rt"))
+
+hockey_df
+```
+
+
+### Make a summary
+```{r}
+hockey_df$Team <- as.factor(hockey_df$Team)
+
+hockey_summary <- hockey_df %>%
+  select(Team, Wins_rt, Losses_rt, Draws_rt) %>%
+  group_by(Team) %>%
+  summarise(Mean_Wins_rt=mean(Wins_rt),Median_Wins_rt=median(Wins_rt), Mean_Losses_rt=mean(Losses_rt), Median_Losses_rt=median(Losses_rt), Mean_Draws_rt=mean(Draws_rt), Median_Draws_rt=median(Draws_rt)) %>%
+  arrange(desc(Mean_Wins_rt))
+
+hockey_summary
+```
+
+
+## 2.3 Most correlated variables (*)
+
+```{r}
+max_cor_var <- function(df, col_name){
+  
+  v_col <- df %>%
+    select(all_of(col_name))  # extract variable based on col_name
+  
+  df_num <- df %>%
+    select_if(is.numeric) %>%
+    select(-all_of(col_name))  # select all numeric variables excluding col_name
+  
+  correlations <- unlist(map(df_num, function(x){
+    cor(x, v_col, use = "complete.obs")
+  }))  # compute correlations with all other numeric variables
+
+  
+  max_abs_cor_var <- names(which(abs(correlations) == max(abs(correlations))))  # extract the variable name
+  
+  
+  return(max_abs_cor_var)  # return dataframe
+}
+
+
+penguins %>%
+  max_cor_var("body_mass_g")
+```
+
+
+```{r}
+top_correlates_by_var <- function(df){
+  
+  cols <- df %>%  # list of all numeric variables
+    select_if(is.numeric)  
+  
+  col_names <- names(cols) # list of all those variables' names
+  
+  max_cor_var_names <- list()  # make a empty list to contain max_cor_var_names
+  
+  index = 1
+  for(var in col_names){
+    max_cor_var_names[index] <- max_cor_var(df, var)  # map()
+    index <- index + 1
+  }
+  
+  return_df <- data.frame(max_cor_var_names)  # turn this list to a dataframe, but the name of columns are not what we want
+  
+  names(return_df) <- col_names  # rename the columns' names with col_names
+  
+  return(return_df)
+}
+
+penguins %>%
+  top_correlates_by_var()
+
+```
+
+
+```{r}
+
+penguins %>%
+  group_by(species) %>%
+  nest() %>%
+  mutate(top_cor = map(data, top_correlates_by_var)) %>%
+  select(-data) %>%
+  unnest(cols = c(top_cor)) %>%
+  select(-year)
+  
+```
+
+
+
