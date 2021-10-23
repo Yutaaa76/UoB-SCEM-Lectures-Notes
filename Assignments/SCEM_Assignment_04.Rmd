@@ -1,0 +1,136 @@
+---
+title: "SCEM_Assignment_04"
+author: "Wenjie Qi"
+date: "2021/10/20"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(tidyr)
+```
+
+
+# 3 Sampling with replacement
+```{r}
+choose(8, 3)
+```
+
+
+$$P(z) =  \binom{35}{z} (\frac{3}{10})^{z} (\frac{7}{10})^{35-z}  $$
+
+```{r}
+prob_red_spheres <- function(z){
+  p_z <-  0.3^z*choose(35, z)*0.7^(35-z)
+  return(p_z)
+}
+
+prob_red_spheres(20)
+```
+
+```{r}
+num_reds <- c(1:35)
+
+prob <- unlist(map(num_reds, prob_red_spheres))
+
+prob_by_num_reds <- data.frame(num_reds, prob)
+
+prob_by_num_reds %>% head(5)
+```
+
+```{r}
+prob_by_num_reds %>%
+  ggplot(aes(x=num_reds, y=prob)) + geom_line()+ theme_bw() + xlab("Number of reds") + ylab("Probability")
+```
+
+```{r}
+sample(10, 35, replace = T)
+```
+
+```{r}
+set.seed(0)
+
+for(i in 1:5){
+
+  print(sample(100, 5, replace = F))
+}
+```
+
+
+```{r}
+for(i in 1:5){
+  
+  set.seed(1)
+  print(sample(100, 5, replace = F))
+}
+```
+
+
+
+```{r}
+num_trials <- 1000  # set the number of trials
+set.seed(0)  # set the random seed
+
+sampling_with_replacement_simulation <- data.frame(trial = 1:num_trials) %>%
+  mutate(sample_balls = map(.x=trial, ~sample(10, 35, replace = T))) %>%
+  mutate(num_reds = map_dbl(.x=sample_balls, ~sum(.x <= 3)))
+
+sampling_with_replacement_simulation
+```
+
+
+```{r}
+num_reds_in_simulation <- sampling_with_replacement_simulation%>%pull(num_reds)
+
+prob_by_num_reds<-prob_by_num_reds%>%
+  mutate(simulation_count=map_dbl(.x=num_reds,~sum(num_reds_in_simulation==.x)))
+
+prob_by_num_reds
+```
+
+```{r}
+prob_by_num_reds <- prob_by_num_reds %>%
+  mutate(expected_count = num_trials * prob)
+
+prob_by_num_reds
+```
+
+```{r}
+prob_by_num_reds %>%
+  rename(Simulation=simulation_count, Expected=expected_count) %>%
+  pivot_longer(cols=c("Simulation","Expected"), names_to="Type", values_to="count") %>%
+  ggplot(aes(num_reds, count)) + geom_line(aes(linetype=Type, color=Type)) + scale_linetype_manual(values = c("solid", "dashed")) + theme_bw() + xlab("Number of reds") + ylab("Count")
+```
+# 4 Sampling without replacement
+
+```{r}
+set.seed(0)
+
+num_trials <- 1000
+
+simulations <- data.frame(trial = 1:num_trials) %>%
+  mutate(sample_balls = map(.x=trial, ~sample(100, 10, replace = F))) %>%
+  mutate(num_reds = map_dbl(.x=sample_balls, ~length(which(.x <= 50)))) %>%
+  mutate(num_blues = map_dbl(.x=sample_balls, ~length(which(.x > 50 & .x <= 80)))) %>%
+  mutate(num_greens = map_dbl(.x=sample_balls, ~length(which(.x > 80 & .x <= 100)))) %>%
+  mutate(min_num = pmin(num_reds, num_blues, num_greens))
+
+simulations
+```
+
+
+```{r}
+simulations %>%
+  summarize(
+    missing_proportion = length(which(min_num==0)) / num_trials
+  )
+```
+
+(*)
+```{r}
+missing_rate <- (choose(50,10) + choose(70, 10) + choose(80, 10)) / choose(100, 10) 
+
+missing_rate
+```
+
+

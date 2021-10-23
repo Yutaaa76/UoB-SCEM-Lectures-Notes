@@ -271,7 +271,7 @@ top_correlates_by_var <- function(df){
     index <- index + 1
   }
   
-  return_df <- data.frame(max_cor_var_names)  # turn this list to a dataframe, but the name of columns are not what we want
+  return_df <- as.tibble(data.frame(max_cor_var_names))  # turn this list to a dataframe, but the name of columns are not what we want
   
   names(return_df) <- col_names  # rename the columns' names with col_names
   
@@ -298,3 +298,21 @@ penguins %>%
 
 
 
+# 3.5 (**)
+
+Proof:
+
+Assume that [1,0] is countable finite.
+
+Then we can display all the numbers belong to (0, 1) in this format:
+
+0.a11 a12 a13...
+0.a21 a22 a23...
+0.a31 a32 a33...
+....
+0.an1 an2 an3...
+...
+
+then we can construct a number:
+0.ax1 ax2 ax3...
+and let ax1!= a11, ax2 != a22, ax3 != a33,... , axn != ann,...
