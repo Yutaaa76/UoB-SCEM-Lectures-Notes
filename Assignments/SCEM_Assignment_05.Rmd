@@ -1,0 +1,222 @@
+---
+title: "SCEM_Assignment_05"
+author: "Wenjie Qi"
+date: "2021/10/26"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(latex2exp)
+library(stringr)
+```
+
+
+
+# 2 Simulating data with the uniform distribution
+
+
+
+```{r}
+set.seed(0)
+
+n <- 1000
+
+sample_X <- data.frame(U=runif(n)) %>%
+  mutate(X=case_when(
+    (0<=U)&(U<0.25)~1,
+    (0.25<=U)&(U<0.5)~5,
+    (0.5<=U)&(U<=1)~0)) %>%
+  pull(X)
+```
+
+
+```{r}
+sample_X_015 <- function(a, b, n){
+  set.seed(1)
+  
+  sample_X <- data.frame(U=runif(n)) %>%
+  mutate(X=case_when(
+    (0<=U)&(U<a)~1,
+    (a<=U)&(U<a+b)~5,
+    (a+b<=U)&(U<=1)~0)) %>%
+  pull(X)
+}
+
+sample_X <- sample_X_015(0.5, 0.1, 10000)
+
+mean(sample_X)
+# mean(X) should be 1.0
+var(sample_X)
+# var(X) should be 2.0
+```
+
+
+```{r}
+set.seed(0)
+n <- 100
+a <- 0.1
+
+beta <- seq(from=0, to=0.9, by= 0.01)
+
+simulation_by_beta <- data.frame(beta) %>%
+  mutate(sample_X = map(.x=beta, ~sample_X_015(a, .x, n))) %>%
+  mutate(sample_avg = map_dbl(.x=sample_X, ~mean(.x))) %>%
+  select(-sample_X) %>%
+  mutate(expectation = a + 5*beta)
+
+simulation_by_beta %>% head(5)
+
+```
+
+```{r}
+df_pivot <- simulation_by_beta %>%
+  rename(Sample=sample_avg, Expectation=expectation) %>%
+  pivot_longer(cols = !beta, names_to = "var", values_to = "val")
+
+df_pivot %>%head(5)
+```
+
+```{r}
+df_pivot %>%
+  ggplot(aes(x=beta, y=val, linetype=var)) +
+  geom_line(data=df_pivot %>%
+              filter(var=="Expectation")) +
+  geom_point(data=df_pivot %>%
+               filter(var=="Sample")) +
+  labs(x=TeX("$\\beta$"), y="Mean", linetype="") +
+  theme_bw()
+```
+
+
+# 3 Gaussian distribution
+
+## Density
+```{r}
+x <- seq(-4, 6, by=0.01)
+
+normal_densities_by_x <- data.frame(x=x, density=dnorm(x, mean=1, sd=sqrt(1)), var=1) %>%
+  rbind(data.frame(x=x, density=dnorm(x, mean=1, sd=sqrt(2)), var=2)) %>%
+  rbind(data.frame(x=x, density=dnorm(x, mean=1, sd=sqrt(3)), var=3))
+
+ggplot(normal_densities_by_x, aes(x, y=density, color=as.character(var), linetype=as.character(var))) + geom_line() + theme_bw() + labs(color="Variance", linetype="Variance", x="x", y="Density")
+
+```
+
+## Cumulative distribution
+```{r}
+x <- seq(-4, 6, by=0.01)
+
+normal_cdf_by_x <- data.frame(x=x, cdf=pnorm(x, mean=1, sd=sqrt(1)), var=1) %>%
+  rbind(data.frame(x=x, cdf=pnorm(x, mean=1, sd=sqrt(2)), var=2)) %>%
+  rbind(data.frame(x=x, cdf=pnorm(x, mean=1, sd=sqrt(3)), var=3))
+
+ggplot(normal_cdf_by_x, aes(x, y=cdf, color=as.character(var), linetype=as.character(var))) + 
+  geom_line() + 
+  theme_bw() + 
+  labs(color="Variance", linetype="Variance", x="x", y="Cumulative Distribution")
+```
+
+
+```{r}
+probs <- seq(0, 1, 0.01)
+normal_cdf_by_x <- data.frame(p=probs, q=qnorm(p=probs, mean=1, sd=sqrt(1)), var=1) %>%
+  rbind(data.frame(p=probs, q=qnorm(probs, mean=1, sd=sqrt(2)), var=2)) %>%
+  rbind(data.frame(p=probs, q=qnorm(probs, mean=1, sd=sqrt(3)), var=3))
+
+ggplot(normal_cdf_by_x, aes(x=p, y=q, color=as.character(var), linetype=as.character(var))) +
+  geom_line() +
+  theme_bw() +
+  labs(color="Variance", linetype="Variance", y="Quantile", x="Probability")
+```
+
+
+
+```{r}
+set.seed(0)
+
+standardGaussianSample <- rnorm(100)
+
+mean1Var3GaussianSampleA <- 1 + sqrt(3) * standardGaussianSample
+
+set.seed(0)
+
+mean1Var3GaussianSampleB <- rnorm(100, 1, sqrt(3))
+
+all.equal(mean1Var3GaussianSampleA, mean1Var3GaussianSampleB)
+```
+
+
+```{r}
+colors <- c("Population density" = "red", "Sample kernel density" = "blue",
+            "Population mean" = "green", "Sample mean" = "pink")
+
+linetypes <- c("Population density" = "solid", "Sample kernel density" = "dashed",
+            "Population mean" = "solid", "Sample mean" = "dashed")
+
+ggplot() + theme_bw() + labs(x="x", y="Density") +
+  scale_color_manual(name="Legend", values=colors) +
+  
+  scale_linetype_manual(name="Legend", values=linetypes) +
+  
+  geom_line(data=(normal_densities_by_x %>% filter(var==3)),
+            aes(x, y=density, color="Population density", linetype="Population density")) +
+  
+  geom_vline(aes(xintercept=1, color="Population mean", linetype="Population mean")) +
+  
+  geom_vline(aes(xintercept=mean(mean1Var3GaussianSampleA), color="Sample mean", linetype="Sample mean")) +
+  
+  geom_density(data=data.frame(x=mean1Var3GaussianSampleA),
+               aes(x=x, color="Sample kernel density", linetype="Sample kernel density"))
+```
+
+
+# 4 The Binominal distribution and the central limit theorem
+
+```{r}
+p <- 0.7
+n <- 50
+
+binom_df <- data.frame(x=seq(0, n)) %>%
+  mutate(pmf=map_dbl(.x=x, ~dbinom(x=.x, size=n, prob=p)))
+
+binom_df %>% head(5)
+```
+
+```{r}
+inc <- 0.01
+mu <- n*p
+sigma=sqrt(n*p*(1-p))
+
+gaussian_df <- data.frame(x=seq(0, n, inc)) %>%
+  mutate(pdf=map_dbl(.x=x, ~dnorm(x=.x, mu, sigma)))
+
+gaussian_df %>% head(5)
+```
+
+```{r}
+colors <- c("Gaussian pdf"="red", "Binomial pmf"="blue")
+fill <- c("Gaussian pdf"="white", "Binomial pmf"="white")
+
+ggplot() + labs(x="x", y="Probabilty") + theme_bw() +
+  geom_line(data=gaussian_df,
+            aes(x, y=pdf, color="Gaussian pdf"), size=2) +
+  geom_col(data=binom_df,
+           aes(x=x, y=pmf, color="Binomial pmf")) +
+  scale_color_manual(name="", values=colors) +
+  scale_fill_manual(name="", values=fill) +
+  xlim(c(20, 50))
+```
+
+
+# 5 Exponential distribution
+
+
+
+
+
+
+
+
+
+

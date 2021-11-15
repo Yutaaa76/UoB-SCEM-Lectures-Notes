@@ -106,7 +106,7 @@ prob_by_num_reds %>%
 ```{r}
 set.seed(0)
 
-num_trials <- 1000
+num_trials <- 10000000
 
 simulations <- data.frame(trial = 1:num_trials) %>%
   mutate(sample_balls = map(.x=trial, ~sample(100, 10, replace = F))) %>%
@@ -114,8 +114,6 @@ simulations <- data.frame(trial = 1:num_trials) %>%
   mutate(num_blues = map_dbl(.x=sample_balls, ~length(which(.x > 50 & .x <= 80)))) %>%
   mutate(num_greens = map_dbl(.x=sample_balls, ~length(which(.x > 80 & .x <= 100)))) %>%
   mutate(min_num = pmin(num_reds, num_blues, num_greens))
-
-simulations
 ```
 
 
@@ -128,7 +126,7 @@ simulations %>%
 
 (*)
 ```{r}
-missing_rate <- (choose(50,10) + choose(70, 10) + choose(80, 10)) / choose(100, 10) 
+missing_rate <- (choose(50,10) + choose(70, 10) + choose(80, 10) - choose(50, 10) - choose(30, 10) - choose(20, 10)) / choose(100, 10) 
 
 missing_rate
 ```

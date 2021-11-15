@@ -1,0 +1,29 @@
+---
+title: "Lecture12_Notes"
+author: "Wenjie Qi"
+date: "2021/10/25"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+num_trials <- 1000000
+set.seed(1)
+sample_size <- 5
+
+dice_sample_average_simulation <- data.frame(trial=1:num_trials) %>%
+  mutate(dice_sample=map(.x=trial, ~sample(6, sample_size, replace = T))) %>%
+  mutate(sample_avg=map_dbl(.x=dice_sample, ~mean(.x)))
+
+dice_sample_average_simulation %>%
+  ggplot(aes(x=sample_avg)) +
+  geom_histogram(aes(y=..count../sum(..count..)),
+                 bandwidth=1/sample_size, fill="blue", color="blue") +
+  theme_bw() +
+  xlim(c(1, 6)) +
+  xlab("Sample average") + ylab("Proportion")
+```
+

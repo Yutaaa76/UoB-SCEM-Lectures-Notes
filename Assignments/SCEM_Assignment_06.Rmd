@@ -1,0 +1,88 @@
+---
+title: "SCEM_Assignment_06"
+author: "Wenjie Qi"
+date: "2021/11/10"
+output: html_document
+---
+
+# 1 A Gaussian model for Red tailed hawks
+
+```{r}
+library(Stat2Data)
+library(tidyverse)
+data("Hawks")
+```
+
+
+```{r}
+RedTailedDF <- Hawks %>%
+  filter(Species == "RT") %>%
+  select(Weight, Tail, Wing)
+
+RedTailedDF
+```
+
+
+```{r}
+tail_lengths <- RedTailedDF$Tail
+n<- length(tail_lengths)
+mu_mle_tail_lengths <- mean(tail_lengths)
+sigma_mle_tail_lengths <- sd(tail_lengths) * sqrt((n-1) / n)
+
+lengths <- seq(mu_mle_tail_lengths - 3*sigma_mle_tail_lengths, mu_mle_tail_lengths + 3*sigma_mle_tail_lengths, sigma_mle_tail_lengths*0.01) # generate indices
+colors <- c("MLE density"="red", "Kernel density"="blue")
+
+ggplot()+ geom_line(data=data.frame(Tail_lengths=lengths,
+                                    Density=dnorm(lengths,
+                                                  mean=mu_mle_tail_lengths,
+                                                  sd=sigma_mle_tail_lengths)),
+                    aes(x=Tail_lengths, y=Density, color="MLE density")) +
+  geom_density(data=tibble(tail_lengths), aes(x=tail_lengths, color="Kernel density")) +
+  labs(y="Density function", color="Estimator") + theme_bw() + scale_color_manual(values=colors)
+```
+
+
+
+# 2 Location estimators with Gaussian data
+
+```{r}
+set.seed(0)
+num_trials_per_sample_size <- 20000
+min_sample_size <- 5
+max_sample_size <- 500
+sample_size_inc <- 5
+
+mu_0 <- 1
+sigma_0 <- 3
+
+simulation_df <- crossing(trial=seq(num_trials_per_sample_size),
+                          sample_size=seq(min_sample_size,
+                                          max_sample_size, sample_size_inc)) %>%
+  # create data frame of all pairs of sample_size and trial
+  mutate(simulation=pmap(.l=list(trial, sample_size),
+                         .f=~rnorm(.y, mean=mu_0, sd=sigma_0))) %>%
+  # simulate sequences of Gaussian random variables
+  mutate(sample_md=map_dbl(.x=simulation, .f=median)) %>%
+  mutate(sample_mean=map_dbl(.x=simulation, .f=mean)) %>%
+  # compute the sample medians and means
+  group_by(sample_size) %>%
+  summarise(msq_error_md = mean((sample_md - mu_0)**2), 
+            msq_error_mean = mean((sample_mean - mu_0)**2))
+
+trend_plot <- ggplot() +            geom_smooth(data=data.frame(msq_error_mean=simulation_df$msq_error_mean,
+                                     sample_size=simulation_df$sample_size),
+                     aes(x=sample_size, y=msq_error_mean, color="Mean", linetype="Mean")) +
+  geom_smooth(data=data.frame(msq_error_md=simulation_df$msq_error_md,
+                            sample_size=simulation_df$sample_size),
+            aes(x=sample_size, y=msq_error_md, color="Median", linetype="Median")) + theme_bw() +
+  scale_color_manual(name="Estimator", values=c("Mean"="red", "Median"="blue")) +
+  scale_linetype_manual(name="Estimator", values=c("Mean"="solid", "Median"="dashed")) + 
+  labs(x="Sample size", y="Mean square error") + xlim(c(30, 500))
+
+trend_plot
+```
+
+
+
+
+
